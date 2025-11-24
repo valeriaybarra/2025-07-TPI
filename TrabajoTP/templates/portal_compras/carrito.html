@@ -30,12 +30,14 @@
             {% endif %}
         </ul>
         <div class="header__buttons-container">
-            {% if user %}
-                <span style="color: white; margin-right: 1rem;">Hola, {{ user.firstName }}</span>
+            {% if user.is_authenticated %}
+                <span style="color: white; margin-right: 1rem;">
+                    Hola, {{ user.first_name }}!
+                </span>
                 <a href="{% url 'logout' %}" class="btn btn--login">Cerrar Sesión</a>
             {% else %}
-                <a href="{% url 'login' %}" class="btn btn--login">Log In</a>
-                <a href="{% url 'registro' %}" class="btn btn--Sign_Up">Sign Up</a>
+                    <a href="{% url 'login' %}" class="btn btn--login">Log In</a>
+                    <a href="{% url 'registro' %}" class="btn btn--Sign_Up">Sign Up</a>
             {% endif %}
         </div>
     </nav>

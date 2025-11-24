@@ -5,7 +5,6 @@ Django settings for TrabajoTP project.
 from pathlib import Path
 import os
 from dotenv import load_dotenv
-import jwt
 
 load_dotenv()  # Cargar variables del archivo .env
 
@@ -98,45 +97,42 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-# Configuración Keycloak - usa localhost para el navegador
-KEYCLOAK_SERVER_URL = os.getenv('KEYCLOAK_SERVER_URL', 'http://localhost:8080')
+# =============================================================================
+# CONFIGURACIÓN KEYCLOAK - CORREGIDA
+# =============================================================================
+
+# Configuración Keycloak
+KEYCLOAK_SERVER_URL = os.getenv('KEYCLOAK_SERVER_URL', 'http://keycloak:8080')
 KEYCLOAK_REALM = os.getenv('KEYCLOAK_REALM', 'ds-2025-realm')
 KEYCLOAK_CLIENT_ID = os.getenv('KEYCLOAK_CLIENT_ID', 'grupo-07')
 KEYCLOAK_CLIENT_SECRET = os.getenv('KEYCLOAK_CLIENT_SECRET', 'tdSnJM8CsPPl6dJW4Tq6k9JWnSqndkfH')
 
-# Configuración de Social Auth para Keycloak - usa localhost
+# Configuración para Stock API (grupo-05)
+STOCK_API_CLIENT_ID = 'grupo-05'
+STOCK_API_CLIENT_SECRET = '9e676dd4-2790-4191-9f1f-06c6c6fd71e5'
+STOCK_API_URL = 'http://stock_backend_api:8081/v1'
+
+# =============================================================================
+# CONFIGURACIÓN SOCIAL AUTH - CORREGIDA
+# =============================================================================
+
+# Configuración de Social Auth para Keycloak
 SOCIAL_AUTH_KEYCLOAK_KEY = KEYCLOAK_CLIENT_ID
 SOCIAL_AUTH_KEYCLOAK_SECRET = KEYCLOAK_CLIENT_SECRET
 SOCIAL_AUTH_KEYCLOAK_AUTHORIZATION_URL = f'{KEYCLOAK_SERVER_URL}/realms/{KEYCLOAK_REALM}/protocol/openid-connect/auth'
 SOCIAL_AUTH_KEYCLOAK_ACCESS_TOKEN_URL = f'{KEYCLOAK_SERVER_URL}/realms/{KEYCLOAK_REALM}/protocol/openid-connect/token'
 SOCIAL_AUTH_KEYCLOAK_USERINFO_URL = f'{KEYCLOAK_SERVER_URL}/realms/{KEYCLOAK_REALM}/protocol/openid-connect/userinfo'
 
-# Configuración OAuth2 para Keycloak
+# Backend de autenticación CORREGIDO
 AUTHENTICATION_BACKENDS = (
     'portal_compras.backends.CustomKeycloakOAuth2', 
     'django.contrib.auth.backends.ModelBackend',
 )
-KEYCLOAK_PUBLIC_KEY = 'MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAvRNUYBCIBoBLKvj9dFjHHhR3YCY93OkBQ/okdg5F1kRrXZOlHWoP1DLh4IYadr0DtlBWqQJWgzHr/Symo86F5f4mLqdiGX7zXoH6jvig8EX1fOF+tkXK4GeyEpPaU3FBHEoptSZGiHSQJhd2q1bPVwyh9LcsWdUktRUEhyJaa+kTQxLtt816dny9JpRgDt1JfZYNs9i66iqfBfGoF88Mf7z7QKKP9D9JlYHvnzKcqtSqUcW0T2QO195gBGV0hL/df1owBVC0CI1pKoddUZNAiEvUDk2OE7ERdcBy5YY04vwoP6EVrGJi3bYKrtkYZdmxj7obfgUhHSvuu2BwxpN1yQIDAQAB'
-KEYCLOAK_PUBLIC_KEY = KEYCLOAK_PUBLIC_KEY
+
+# Scope completo para obtener todos los datos del usuario
 SOCIAL_AUTH_KEYCLOAK_SCOPE = ['openid']
 
-# Deshabilitar verificación de aud claim
-JWT_DECODE_OPTIONS = {
-    "verify_aud": False,
-    "verify_signature": False  # Temporalmente
-}
-
-# Deshabilitar verificaciones estrictas
-SOCIAL_AUTH_SANITIZE_REDIRECTS = False
-SOCIAL_AUTH_REDIRECT_IS_HTTPS = False
-
-# Configuración general de Social Auth
-SOCIAL_AUTH_LOGIN_REDIRECT_URL = '/'
-SOCIAL_AUTH_LOGIN_ERROR_URL = '/login-error/'
-SOCIAL_AUTH_NEW_USER_REDIRECT_URL = '/'
-SOCIAL_AUTH_USER_FIELDS = ['email', 'username']
-
-# Pipeline para crear usuarios desde Keycloak
+# Pipeline SIMPLIFICADO y CORREGIDO
 SOCIAL_AUTH_PIPELINE = (
     'social_core.pipeline.social_auth.social_details',
     'social_core.pipeline.social_auth.social_uid',
@@ -147,21 +143,49 @@ SOCIAL_AUTH_PIPELINE = (
     'social_core.pipeline.social_auth.associate_user',
     'social_core.pipeline.social_auth.load_extra_data',
     'social_core.pipeline.user.user_details',
-    'social_core.pipeline.user.user_details',
-    'portal_compras.pipeline.get_email_from_keycloak',
 )
+
+# Datos extra que se guardarán del token
 SOCIAL_AUTH_KEYCLOAK_EXTRA_DATA = [
     ('email', 'email'),
-    ('given_name', 'first_name'),
-    ('family_name', 'last_name')
+    ('given_name', 'first_name'),      # ✅ Keycloak → Django
+    ('family_name', 'last_name'),      # ✅ Keycloak → Django  
+    ('preferred_username', 'username'),
+    ('sub', 'sub'),
 ]
+
+# Configuración general de Social Auth
+SOCIAL_AUTH_LOGIN_REDIRECT_URL = '/'
+SOCIAL_AUTH_LOGIN_ERROR_URL = '/login-error/'
+SOCIAL_AUTH_NEW_USER_REDIRECT_URL = '/'
+SOCIAL_AUTH_USER_FIELDS = ['email', 'username']
+
+# Para desarrollo - deshabilitar verificaciones estrictas
+SOCIAL_AUTH_SANITIZE_REDIRECTS = False
+SOCIAL_AUTH_REDIRECT_IS_HTTPS = False
+
+# Configuración JWT simplificada
+JWT_DECODE_OPTIONS = {
+    "verify_aud": False,
+    "verify_signature": False  # Temporalmente para desarrollo
+}
+
+# =============================================================================
+# CONFIGURACIÓN CORS
+# =============================================================================
+
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:8000",
     "http://127.0.0.1:8000",
     "http://localhost:8080",
 ]
 
-# Configuración OAuth2 Toolkit (para API)
+CORS_ALLOW_CREDENTIALS = True
+
+# =============================================================================
+# CONFIGURACIÓN OAUTH2 TOOLKIT (para API)
+# =============================================================================
+
 OAUTH2_PROVIDER = {
     'SCOPES': {
         'read': 'Read scope',
@@ -183,11 +207,49 @@ REST_FRAMEWORK = {
     )
 }
 
-# Configuración de sesiones
+# =============================================================================
+# CONFIGURACIÓN DE SESIONES
+# =============================================================================
+
 SESSION_COOKIE_SECURE = False  # True en producción con HTTPS
 SESSION_COOKIE_HTTPONLY = True
 SESSION_COOKIE_AGE = 3600  # 1 hora
+SESSION_COOKIE_SAMESITE = 'Lax'
+
+# =============================================================================
+# URLs DE AUTENTICACIÓN
+# =============================================================================
 
 LOGIN_URL = '/login/'
 LOGIN_REDIRECT_URL = '/'
 LOGOUT_REDIRECT_URL = '/'
+
+# =============================================================================
+# LOGGING PARA DEBUG
+# =============================================================================
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+        },
+    },
+    'root': {
+        'handlers': ['console'],
+        'level': 'INFO',
+    },
+    'loggers': {
+        'social': {
+            'handlers': ['console'],
+            'level': 'DEBUG',
+            'propagate': False,
+        },
+        'portal_compras': {
+            'handlers': ['console'],
+            'level': 'DEBUG',
+            'propagate': False,
+        },
+    },
+}

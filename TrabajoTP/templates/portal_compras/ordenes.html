@@ -22,12 +22,17 @@
                 <li class="header__nav-item"><a class="btn" href="{% url 'ordenes' %}">Mis Pedidos</a></li>
             </ul>
             <div class="header__buttons-container">
-                {% if user %}
-                    <span style="color: white; margin-right: 1rem;">Hola, {{ user.firstName }}</span>
+                {% if user.is_authenticated %}
+                    <span style="color: white; margin-right: 1rem;">
+                        Hola,
+                        {% if user.first_name and user.last_name %}
+                            {{ user.first_name }}
+                        {% endif %} !
+                    </span>
                     <a href="{% url 'logout' %}" class="btn btn--login">Cerrar Sesión</a>
-                {% else %}
-                    <a href="{% url 'login' %}" class="btn btn--login">Log In</a>
-                    <a href="{% url 'registro' %}" class="btn btn--Sign_Up">Sign Up</a>
+                    {% else %}
+                        <a href="{% url 'login' %}" class="btn btn--login">Log In</a>
+                        <a href="{% url 'registro' %}" class="btn btn--Sign_Up">Sign Up</a>
                 {% endif %}
             </div>
         </nav>
